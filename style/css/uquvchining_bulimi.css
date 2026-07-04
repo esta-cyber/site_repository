@@ -18,8 +18,8 @@ body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background:#f6f8fb
 .actions{display:flex;gap:8px;margin-bottom:12px}
 .btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 12px;border-radius:6px;text-decoration:none}
 .today{background:#fff;padding:12px;border-radius:8px}
-.menu-overlay{position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;background:rgba(255,255,255,0.98);z-index:40;transition:height .25s ease}
-.menu-overlay.open{height:220px}
+.menu-overlay{position:fixed;top:0;left:0;right:0;bottom:0;opacity:0;pointer-events:none;background:rgba(0,0,0,0.10);z-index:40;transition:opacity .2s ease}
+.menu-overlay.open{opacity:1;pointer-events:auto}
 .menu{padding:20px}
 .menu h3{margin-top:0}
 .menu ul{list-style:none;padding:0;margin:8px 0}

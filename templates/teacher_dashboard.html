@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>O'qituvchi paneli</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style/css/teacher.css' %}">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         header { display: flex; align-items: center; justify-content: space-between; }
@@ -20,14 +22,14 @@
         .form-inline input[type=number] { width: 5rem; }
     </style>
 </head>
-<body>
+<body class="ustoz">
     <header>
         <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
                 {{ teacher.surname|slice:":1" }}
             </div>
             <div>
-                <h2>O'qituvchi boshqaruv paneli</h2>
+                <h2>Ustoz boshqaruv paneli</h2>
                 <p>{{ teacher.surname }} — Guruh: <strong>{{ teacher.group }}</strong></p>
             </div>
         </div>
@@ -38,7 +40,8 @@
     </header>
 
     <section class="info">
-        <p>Bugun berilgan ballar: <strong>{{ points_given_today }}</strong> / 50</p>
+        <p>Bugunga nechtaga o'quvchiga ball berilgan: <strong>{{ students_awarded_today }}</strong></p>
+        <p>Guruhdagi o'quvchilar soni: <strong>{{ students_count }}</strong></p>
         <p>Bugungi guruh tokenlari: <strong>{{ group_tokens_today }}</strong> / 10</p>
     </section>
 
@@ -59,20 +62,20 @@
         </thead>
         <tbody>
             {% for student in students %}
-                <tr>
+                <tr onclick="window.location.href='{{ request.path }}?view_student={{ student.id }}'" style="cursor:pointer">
                     <td>{{ student.surname }}</td>
                     <td>{{ student.total_points }}</td>
                     <td>{{ student.total_tokens }}</td>
                     <td>
-                        <form method="post" class="form-inline">
+                        <form method="post" class="form-inline" onclick="event.stopPropagation()">
                             {% csrf_token %}
                             <input type="hidden" name="student_id" value="{{ student.id }}">
                             <input type="hidden" name="action" value="give_points">
                             <label>Ball:</label>
-                            <input type="number" name="amount" min="1" max="{{ remaining_points }}" value="1">
+                            <input type="number" name="amount" min="1" value="1">
                             <button class="btn" type="submit">Berish</button>
                         </form>
-                        <form method="post" class="form-inline" style="margin-top:0.5rem;">
+                        <form method="post" class="form-inline" style="margin-top:0.5rem;" onclick="event.stopPropagation()">
                             {% csrf_token %}
                             <input type="hidden" name="student_id" value="{{ student.id }}">
                             <input type="hidden" name="action" value="give_token">
@@ -85,5 +88,15 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% if selected_student %}
+    <section style="margin-top:20px; padding:16px; background:#222; color:#e6e6e6; border-radius:8px;">
+        <h3>Tanlangan talaba: {{ selected_student.surname }}</h3>
+        <p><strong>Guruh:</strong> {{ selected_student.group }}</p>
+        <p><strong>Jami ballar:</strong> {{ selected_student.total_points }}</p>
+        <p><strong>Jami tokenlar:</strong> {{ selected_student.total_tokens }}</p>
+        <p><strong>Login:</strong> {{ selected_student.login }}</p>
+    </section>
+    {% endif %}
 </body>
 </html>

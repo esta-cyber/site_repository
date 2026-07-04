@@ -1,0 +1,6 @@
+/* Lighter dark mode for Ustoz (teacher) page */
+body.ustoz{background:#1a1a1a;color:#eee}
+body.ustoz .top-bar{background:#232323;box-shadow:0 1px 3px rgba(0,0,0,0.35)}
+body.ustoz .panel-title{color:#e6e6e6}
+body.ustoz .menu-drawer{background:#151515}
+body.ustoz .btn{background:#355fa8}

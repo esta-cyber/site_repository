@@ -9,10 +9,19 @@ from .models import Person, PointAward, TokenAward
 
 USERS = [
     {'surname': 'Adminov', 'login': 'admin', 'role': 'admin', 'group': ''},
-    {'surname': 'Aliyev', 'login': 'aliyev', 'role': 'student', 'group': 'guruh1'},
-    {'surname': 'Valiyeva', 'login': 'vali', 'role': 'student', 'group': 'guruh1'},
-    {'surname': 'Karimov', 'login': 'teacher', 'role': 'teacher', 'group': 'guruh1'},
+    {'surname': 'Teacher1', 'login': 'teacher1', 'role': 'teacher', 'group': 'guruh1'},
+    {'surname': 'Teacher2', 'login': 'teacher2', 'role': 'teacher', 'group': 'guruh2'},
+    {'surname': 'Teacher3', 'login': 'teacher3', 'role': 'teacher', 'group': 'guruh3'},
 ]
+
+for group_index in range(1, 4):
+    for student_index in range(1, 16):
+        USERS.append({
+            'surname': f'Talaba{group_index}_{student_index}',
+            'login': f'talaba{group_index}_{student_index}',
+            'role': 'student',
+            'group': f'guruh{group_index}',
+        })
 
 
 def get_or_sync_person(surname, login):
@@ -114,12 +123,20 @@ def teacher_boshqaruv_bulimi(request):
         return redirect('enter')
 
     today = timezone.localdate()
-    points_given_today = PointAward.objects.filter(teacher=teacher, created_at__date=today).aggregate(total=Sum('amount'))['total'] or 0
+    # No per-teacher daily cap. We track distinct students awarded today (for info only).
+    students_awarded_today = PointAward.objects.filter(teacher=teacher, created_at__date=today).values('student').distinct().count()
     group_tokens_today = TokenAward.objects.filter(student__group=teacher.group, created_at__date=today).count()
-    remaining_points = max(0, 50 - points_given_today)
     remaining_tokens = max(0, 10 - group_tokens_today)
 
-    students = Person.objects.filter(role=Person.ROLE_STUDENT, group=teacher.group)
+    students = Person.objects.filter(role=Person.ROLE_STUDENT, group=teacher.group).order_by('surname')
+    selected_student = None
+    selected_student_id = request.GET.get('view_student')
+    if selected_student_id:
+        selected_student = Person.objects.filter(
+            id=selected_student_id,
+            role=Person.ROLE_STUDENT,
+            group=teacher.group,
+        ).first()
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -129,19 +146,23 @@ def teacher_boshqaruv_bulimi(request):
         if not student:
             messages.error(request, 'Talaba topilmadi yoki guruh mos emas.')
         elif action == 'give_points':
-            try:
-                amount = int(request.POST.get('amount', '0'))
-            except ValueError:
-                amount = 0
-
-            if amount <= 0:
-                messages.error(request, 'Iltimos, 1 dan katta ball kiriting.')
-            elif amount > remaining_points:
-                messages.error(request, f'Bugun faqat {remaining_points} ball qoldi.')
+            # Enforce: a student can receive points at most once per day (from any teacher),
+            # and a single award cannot exceed 50 points.
+            already_awarded_today = PointAward.objects.filter(student=student, created_at__date=today).exists()
+            if already_awarded_today:
+                messages.error(request, 'Bugun ushbu talabaga allaqachon ball berilgan — yana berib bo‘lmaydi.')
             else:
-                PointAward.objects.create(teacher=teacher, student=student, amount=amount)
-                messages.success(request, f'{student.surname}ga {amount} ball berildi.')
-                return redirect('teacher_bulimi')
+                try:
+                    amount = int(request.POST.get('amount', '0'))
+                except ValueError:
+                    amount = 0
+
+                if amount <= 0 or amount > 50:
+                    messages.error(request, 'Iltimos, 1 dan 50 gacha ball kiriting.')
+                else:
+                    PointAward.objects.create(teacher=teacher, student=student, amount=amount)
+                    messages.success(request, f'{student.surname}ga {amount} ball berildi.')
+                    return redirect('teacher_bulimi')
         elif action == 'give_token':
             already_given = TokenAward.objects.filter(teacher=teacher, student=student, created_at__date=today).exists()
             if already_given:
@@ -158,10 +179,11 @@ def teacher_boshqaruv_bulimi(request):
     context = {
         'teacher': teacher,
         'students': students,
-        'points_given_today': points_given_today,
-        'remaining_points': remaining_points,
+        'students_awarded_today': students_awarded_today,
+        'students_count': students.count(),
         'group_tokens_today': group_tokens_today,
         'remaining_tokens': remaining_tokens,
+        'selected_student': selected_student,
     }
     return render(request, 'teacher_dashboard.html', context)
 
