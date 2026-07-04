@@ -9,9 +9,11 @@
 </head>
 <body>
     <header class="top-bar">
-        <div>
-            <a href="{% url 'uquvchi_bulimi' %}" class="back">← Orqaga</a>
-        </div>
+        <button class="menu-btn" id="menuBtn" aria-label="Menyu ochish">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="panel-title">Ustoz bilan suhbat</div>
         <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:36px;height:36px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;">{{ user.surname|slice:":1" }}</div>
@@ -19,8 +21,19 @@
             <a class="btn" href="{% url 'logout' %}" style="background:#b30000;">Chiqish</a>
         </div>
     </header>
+
+    <nav class="menu-overlay" id="menuOverlay">
+        {% include 'menu.html' %}
+    </nav>
+
     <main class="content chat">
         <p>Hozircha suhbat uchun namuna sahifa. Keyingi bosqichda real chat xidmatini qo'shish mumkin.</p>
     </main>
+
+    <script>
+        document.getElementById('menuBtn').addEventListener('click', function(){
+            document.getElementById('menuOverlay').classList.toggle('open');
+        });
+    </script>
 </body>
 </html>

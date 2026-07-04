@@ -9,7 +9,11 @@
 </head>
 <body>
     <header class="top-bar">
-        <a href="{% url 'uquvchi_bulimi' %}" class="back">← Orqaga</a>
+        <button class="menu-btn" id="menuBtn" aria-label="Menyu ochish">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="panel-title">Ball bilan narsa sotib olish</div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
             <div style="width:36px;height:36px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;">{{ student.surname|slice:":1" }}</div>
@@ -17,6 +21,11 @@
             <a class="btn" href="{% url 'logout' %}" style="background:#b30000;">Chiqish</a>
         </div>
     </header>
+
+    <nav class="menu-overlay" id="menuOverlay">
+        {% include 'menu.html' %}
+    </nav>
+
     <main class="content">
         <p>Bu sahifa talaba ballarini sarflash uchun mahsulotlar ro'yxatini ko'rsatadi. (Namuna)</p>
         <ul>
@@ -24,5 +33,11 @@
             <li>Mahsulot B — 10 ball</li>
         </ul>
     </main>
+
+    <script>
+        document.getElementById('menuBtn').addEventListener('click', function(){
+            document.getElementById('menuOverlay').classList.toggle('open');
+        });
+    </script>
 </body>
 </html>
