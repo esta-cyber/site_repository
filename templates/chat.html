@@ -31,8 +31,25 @@
     </main>
 
     <script>
-        document.getElementById('menuBtn').addEventListener('click', function(){
-            document.getElementById('menuOverlay').classList.toggle('open');
+        const menuBtn = document.getElementById('menuBtn');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const mainContent = document.querySelector('main');
+        const menuClose = document.querySelector('.menu-close');
+        const menuLinks = document.querySelectorAll('.menu-drawer a');
+
+        const toggleMenu = () => {
+            menuOverlay.classList.toggle('open');
+            mainContent.classList.toggle('dimmed');
+        };
+
+        menuBtn.addEventListener('click', toggleMenu);
+        if (menuClose) menuClose.addEventListener('click', toggleMenu);
+        menuLinks.forEach(link => link.addEventListener('click', () => {
+            menuOverlay.classList.remove('open');
+            mainContent.classList.remove('dimmed');
+        }));
+        menuOverlay.addEventListener('click', event => {
+            if (event.target === menuOverlay) toggleMenu();
         });
     </script>
 </body>
