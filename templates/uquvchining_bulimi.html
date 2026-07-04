@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style/css/uquvchi.css' %}">
+    <title>Talaba paneli</title>
+</head>
+<body>
+    <header class="top-bar">
+        <button class="menu-btn" id="menuBtn" aria-label="Ochish"> 
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="panel-title">Talaba Paneli</div>
+        <div class="user-area">
+            <div class="avatar">{{ student.name|default:'T'|slice:":1" }}</div>
+            <div class="user-meta">
+                <div class="user-name">{{ student.name }}</div>
+                <div class="user-score">Ball: <strong>{{ student.points }}</strong></div>
+                <div class="user-score">Tokenlar: <strong>{{ student.token_total }}</strong></div>
+            </div>
+            <div class="top-right">
+                <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="menu-overlay" id="menuOverlay">
+        {% include 'menu.html' %}
+    </nav>
+
+    <main class="content">
+        <section class="highlight">
+            <h3>Bugungi baholash</h3>
+            <p>O'qituvchi tomonidan berilgan ballar va tokenlar shu yerda ko'rsatiladi.</p>
+            <p class="summary">Tokenlar: <strong>{{ student.token_total }}</strong></p>
+        </section>
+
+        <section class="actions">
+            <a class="btn" href="{% url 'store' %}">Ball bilan narsa sotib olish</a>
+            <a class="btn" href="{% url 'chat' %}">Ustoz bilan suhbat</a>
+            <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
+        </section>
+
+        <section class="today">
+            <h4>Bugungi baholar va e'lonlar</h4>
+            <p>Bu yerda bugungi baholar va reklama ko'rsatiladi.</p>
+        </section>
+    </main>
+
+    <script>
+        // Menu toggle
+        document.getElementById('menuBtn').addEventListener('click', function(){
+            document.getElementById('menuOverlay').classList.toggle('open');
+        });
+    </script>
+</body>
+</html>

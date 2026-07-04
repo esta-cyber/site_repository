@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'quvchilarning kirish qismi</title>
+</head>
+<body>
+    <h2>Kirish</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label for="surname">Familiya:</label><br>
+        <input type="text" id="surname" name="surname" value="{{ saved_surname }}" required><br><br>
+
+        <label for="login">Login:</label><br>
+        <input type="text" id="login" name="login" value="{{ saved_login }}" required><br><br>
+
+        <button type="submit">Kirish</button>
+    </form>
+
+    {% if error_message %}
+        <p style="color:red;">{{ error_message }}</p>
+    {% endif %}
+</body>
+</html>

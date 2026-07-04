@@ -1,0 +1,37 @@
+/* Basic styles for student panel */
+:root{
+    --accent:#2b6cb0;
+    --muted:#666;
+}
+body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background:#f6f8fb;color:#222}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,#ffffff, #f0f4f8);box-shadow:0 1px 4px rgba(0,0,0,0.06);position:fixed;top:0;left:0;right:0;z-index:30}
+.menu-btn{background:none;border:0;padding:8px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.menu-btn span{display:block;width:22px;height:2px;background:#333;border-radius:2px}
+.panel-title{font-weight:600;color:var(--muted)}
+.user-area{display:flex;align-items:center;gap:10px}
+.avatar{width:44px;height:44px;border-radius:50%;background:#cfe3ff;color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700}
+.user-meta{font-size:13px;line-height:1}
+.user-name{font-weight:600}
+.user-score{color:var(--muted);font-size:12px}
+.content{padding:92px 16px 40px}
+.highlight{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:12px}
+.actions{display:flex;gap:8px;margin-bottom:12px}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 12px;border-radius:6px;text-decoration:none}
+.today{background:#fff;padding:12px;border-radius:8px}
+.menu-overlay{position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;background:rgba(255,255,255,0.98);z-index:40;transition:height .25s ease}
+.menu-overlay.open{height:220px}
+.menu{padding:20px}
+.menu h3{margin-top:0}
+.menu ul{list-style:none;padding:0;margin:8px 0}
+.menu li{margin:8px 0}
+.menu a{color:var(--accent);text-decoration:none}
+.stars-display{font-size:20px;color:#ddd}
+.stars-display .star{margin-right:4px}
+.stars-display .star.filled{color:#ffb400}
+
+/* Responsive adjustments */
+@media(max-width:600px){
+    .panel-title{display:none}
+    .content{padding-top:100px}
+    .menu-overlay.open{height:100vh}
+}

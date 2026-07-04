@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>O'qituvchi paneli</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        header { display: flex; align-items: center; justify-content: space-between; }
+        .info { margin-bottom: 1rem; }
+        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }
+        .alert-success { background: #e6ffed; color: #1f7a3e; }
+        .alert-error { background: #ffe6e6; color: #a61c1c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+        th { background: #f7f7f7; }
+        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn { background: #0059b3; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; }
+        .btn-logout { background: #b30000; }
+        .form-inline { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+        .form-inline input[type=number] { width: 5rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
+                {{ teacher.surname|slice:":1" }}
+            </div>
+            <div>
+                <h2>O'qituvchi boshqaruv paneli</h2>
+                <p>{{ teacher.surname }} — Guruh: <strong>{{ teacher.group }}</strong></p>
+            </div>
+        </div>
+        <div class="actions">
+            <a class="btn" href="{% url 'uquvchi_bulimi' %}">Talaba paneli</a>
+            <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
+        </div>
+    </header>
+
+    <section class="info">
+        <p>Bugun berilgan ballar: <strong>{{ points_given_today }}</strong> / 50</p>
+        <p>Bugungi guruh tokenlari: <strong>{{ group_tokens_today }}</strong> / 10</p>
+    </section>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Talaba</th>
+                <th>Ball</th>
+                <th>Tokenlar</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{ student.surname }}</td>
+                    <td>{{ student.total_points }}</td>
+                    <td>{{ student.total_tokens }}</td>
+                    <td>
+                        <form method="post" class="form-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="student_id" value="{{ student.id }}">
+                            <input type="hidden" name="action" value="give_points">
+                            <label>Ball:</label>
+                            <input type="number" name="amount" min="1" max="{{ remaining_points }}" value="1">
+                            <button class="btn" type="submit">Berish</button>
+                        </form>
+                        <form method="post" class="form-inline" style="margin-top:0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="student_id" value="{{ student.id }}">
+                            <input type="hidden" name="action" value="give_token">
+                            <button class="btn" type="submit">Token berish</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">Guruhda talaba yo'q.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

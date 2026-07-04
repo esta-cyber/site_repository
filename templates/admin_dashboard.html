@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin paneli</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }
+        .alert-success { background: #e6ffed; color: #1f7a3e; }
+        .alert-error { background: #ffe6e6; color: #a61c1c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+        th { background: #f7f7f7; }
+        .btn { background: #0059b3; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; }
+        form { margin-bottom: 1rem; }
+        .control { display: grid; gap: 0.5rem; max-width: 420px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
+                {{ user.surname|slice:":1" }}
+            </div>
+            <div>
+                <h2>Admin boshqaruv paneli</h2>
+                <p>{{ user.surname }} profili</p>
+            </div>
+        </div>
+        <div>
+            <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
+        </div>
+    </header>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section>
+        <h3>Yangi foydalanuvchi qo'shish</h3>
+        <form method="post" class="control">
+            {% csrf_token %}
+            <label>Familiya</label>
+            <input type="text" name="surname" required>
+            <label>Login</label>
+            <input type="text" name="login" required>
+            <label>Ro'yhat</label>
+            <select name="role" required>
+                <option value="">Tanlang</option>
+                <option value="admin">Admin</option>
+                <option value="teacher">Teacher</option>
+                <option value="student">Student</option>
+            </select>
+            <label>Guruh</label>
+            <input type="text" name="group" placeholder="A, B, ...">
+            <button class="btn" type="submit">Saqlash</button>
+        </form>
+    </section>
+
+    <section>
+        <h3>Barcha foydalanuvchilar</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Familiya</th>
+                    <th>Login</th>
+                    <th>Rol</th>
+                    <th>Guruh</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for person in people %}
+                    <tr>
+                        <td>{{ person.surname }}</td>
+                        <td>{{ person.login }}</td>
+                        <td>{{ person.role }}</td>
+                        <td>{{ person.group }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">Foydalanuvchi yo'q.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</body>
+</html>
