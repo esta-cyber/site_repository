@@ -5,98 +5,99 @@
     <title>O'qituvchi paneli</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'style/css/teacher.css' %}">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        header { display: flex; align-items: center; justify-content: space-between; }
-        .info { margin-bottom: 1rem; }
-        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }
-        .alert-success { background: #e6ffed; color: #1f7a3e; }
-        .alert-error { background: #ffe6e6; color: #a61c1c; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
-        th { background: #f7f7f7; }
-        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .btn { background: #0059b3; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; }
-        .btn-logout { background: #b30000; }
-        .form-inline { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-        .form-inline input[type=number] { width: 5rem; }
-    </style>
 </head>
 <body class="ustoz">
-    <header>
-        <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
-                {{ teacher.surname|slice:":1" }}
+    <main class="page-shell">
+        <header class="page-header">
+            <div class="page-title">
+                <div class="avatar">{{ teacher.surname|slice:":1" }}</div>
+                <div>
+                    <p class="eyebrow">Ustoz paneli</p>
+                    <h1>{{ teacher.surname }}</h1>
+                    <p class="meta">Guruh: <strong>{{ teacher.group }}</strong></p>
+                </div>
             </div>
-            <div>
-                <h2>Ustoz boshqaruv paneli</h2>
-                <p>{{ teacher.surname }} — Guruh: <strong>{{ teacher.group }}</strong></p>
+            <div class="header-actions">
+                <a class="btn" href="{% url 'uquvchi_bulimi' %}">Talaba paneli</a>
+                <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
             </div>
-        </div>
-        <div class="actions">
-            <a class="btn" href="{% url 'uquvchi_bulimi' %}">Talaba paneli</a>
-            <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
-        </div>
-    </header>
+        </header>
 
-    <section class="info">
-        <p>Bugunga nechtaga o'quvchiga ball berilgan: <strong>{{ students_awarded_today }}</strong></p>
-        <p>Guruhdagi o'quvchilar soni: <strong>{{ students_count }}</strong></p>
-        <p>Bugungi guruh tokenlari: <strong>{{ group_tokens_today }}</strong> / 10</p>
-    </section>
+        <section class="summary-grid">
+            <article>
+                <p class="label">Bugun ball olganlar</p>
+                <h2>{{ students_awarded_today }}</h2>
+            </article>
+            <article>
+                <p class="label">Guruhdagi talaba</p>
+                <h2>{{ students_count }}</h2>
+            </article>
+            <article>
+                <p class="label">Bugungi tokenlar</p>
+                <h2>{{ group_tokens_today }} / 10</h2>
+            </article>
+        </section>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+        {% if messages %}
+            <section class="alerts">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+                {% endfor %}
+            </section>
+        {% endif %}
 
-    <table>
-        <thead>
-            <tr>
-                <th>Talaba</th>
-                <th>Ball</th>
-                <th>Tokenlar</th>
-                <th>Amallar</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-                <tr onclick="window.location.href='{{ request.path }}?view_student={{ student.id }}'" style="cursor:pointer">
-                    <td>{{ student.surname }}</td>
-                    <td>{{ student.total_points }}</td>
-                    <td>{{ student.total_tokens }}</td>
-                    <td>
-                        <form method="post" class="form-inline" onclick="event.stopPropagation()">
-                            {% csrf_token %}
-                            <input type="hidden" name="student_id" value="{{ student.id }}">
-                            <input type="hidden" name="action" value="give_points">
-                            <label>Ball:</label>
-                            <input type="number" name="amount" min="1" value="1">
-                            <button class="btn" type="submit">Berish</button>
-                        </form>
-                        <form method="post" class="form-inline" style="margin-top:0.5rem;" onclick="event.stopPropagation()">
-                            {% csrf_token %}
-                            <input type="hidden" name="student_id" value="{{ student.id }}">
-                            <input type="hidden" name="action" value="give_token">
-                            <button class="btn" type="submit">Token berish</button>
-                        </form>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="4">Guruhda talaba yo'q.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <section class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Talaba</th>
+                        <th>Ball</th>
+                        <th>Tokenlar</th>
+                        <th>Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr onclick="window.location.href='{{ request.path }}?view_student={{ student.id }}'">
+                            <td>{{ student.surname }}</td>
+                            <td>{{ student.total_points }}</td>
+                            <td>{{ student.total_tokens }}</td>
+                            <td>
+                                <form method="post" class="action-row" onclick="event.stopPropagation()">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="action" value="give_points">
+                                    <label class="sr-only">Ball</label>
+                                    <input type="number" name="amount" min="1" max="50" value="1">
+                                    <button class="btn btn-small" type="submit">Ball ber</button>
+                                </form>
+                                <form method="post" class="action-row" onclick="event.stopPropagation()">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="action" value="give_token">
+                                    <button class="btn btn-small btn-secondary" type="submit">Token ber</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">Guruhda talaba yo'q.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
 
-    {% if selected_student %}
-    <section style="margin-top:20px; padding:16px; background:#222; color:#e6e6e6; border-radius:8px;">
-        <h3>Tanlangan talaba: {{ selected_student.surname }}</h3>
-        <p><strong>Guruh:</strong> {{ selected_student.group }}</p>
-        <p><strong>Jami ballar:</strong> {{ selected_student.total_points }}</p>
-        <p><strong>Jami tokenlar:</strong> {{ selected_student.total_tokens }}</p>
-        <p><strong>Login:</strong> {{ selected_student.login }}</p>
-    </section>
-    {% endif %}
+        {% if selected_student %}
+        <section class="detail-panel">
+            <h2>Tanlangan talaba</h2>
+            <div class="detail-grid">
+                <div><span>Ism</span><strong>{{ selected_student.surname }}</strong></div>
+                <div><span>Guruh</span><strong>{{ selected_student.group }}</strong></div>
+                <div><span>Jami ballar</span><strong>{{ selected_student.total_points }}</strong></div>
+                <div><span>Jami tokenlar</span><strong>{{ selected_student.total_tokens }}</strong></div>
+                <div><span>Login</span><strong>{{ selected_student.login }}</strong></div>
+            </div>
+        </section>
+        {% endif %}
+    </main>
 </body>
 </html>

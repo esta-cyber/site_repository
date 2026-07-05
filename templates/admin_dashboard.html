@@ -4,20 +4,30 @@
     <meta charset="UTF-8">
     <title>Admin paneli</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }
-        .alert-success { background: #e6ffed; color: #1f7a3e; }
-        .alert-error { background: #ffe6e6; color: #a61c1c; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
-        th { background: #f7f7f7; }
-        .btn { background: #0059b3; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #121212; color: #e8e8e8; }
+        header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 20px; background: #1f1f1f; border-bottom: 1px solid #333; }
+        main { padding: 20px; }
+        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; }
+        .alert-success { background: #1e4226; color: #c8ffcb; }
+        .alert-error { background: #4f1c1c; color: #ffd6d6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #1a1a1a; }
+        th, td { border: 1px solid #2d2d2d; padding: 0.75rem; text-align: left; }
+        th { background: #222; color: #f0f0f0; }
+        td { color: #dcdcdc; }
+        .btn { background: #3a76d2; color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-logout, .btn-delete { background: #b30000; }
+        .btn-edit { background: #4f7f18; }
+        .btn-secondary { background: #444; }
         form { margin-bottom: 1rem; }
-        .control { display: grid; gap: 0.5rem; max-width: 420px; }
+        .control { display: grid; gap: 0.5rem; max-width: 640px; }
+        input, select { padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid #333; background: #161616; color: #eee; }
+        label { color: #ccc; }
+        .table-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .section { background: #181818; border: 1px solid #2d2d2d; border-radius: 12px; padding: 20px; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
+<main>
     <header>
         <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
@@ -39,42 +49,48 @@
         {% endfor %}
     {% endif %}
 
-    <section>
-        <h3>Yangi foydalanuvchi qo'shish</h3>
+    <section class="section">
+        <h3>{% if edit_user %}Foydalanuvchini tahrirlash{% else %}Yangi foydalanuvchi qo'shish{% endif %}</h3>
         <form method="post" class="control">
             {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ edit_user.id }}">
             <label>Familiya</label>
-            <input type="text" name="surname" required>
+            <input type="text" name="surname" value="{{ edit_user.surname|default:'' }}" required>
             <label>Login</label>
-            <input type="text" name="login" required>
+            <input type="text" name="login" value="{{ edit_user.login|default:'' }}" required>
             <label>Ro'yhat</label>
             <select name="role" required>
                 <option value="">Tanlang</option>
-                <option value="admin">Admin</option>
-                <option value="teacher">Teacher</option>
-                <option value="student">Student</option>
+                <option value="admin" {% if edit_user.role == 'admin' %}selected{% endif %}>Admin</option>
+                <option value="teacher" {% if edit_user.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                <option value="student" {% if edit_user.role == 'student' %}selected{% endif %}>Student</option>
             </select>
             <label>Guruh</label>
-            <input type="text" name="group" placeholder="A, B, ...">
+            <input type="text" name="group" placeholder="A, B, ..." value="{{ edit_user.group|default:'' }}">
             <label>Sinf nomi</label>
-            <input type="text" name="class_name" placeholder="Guruh 1, 2A, 3B ...">
+            <input type="text" name="class_name" placeholder="Guruh 1, 2A, 3B ..." value="{{ edit_user.class_name|default:'' }}">
             <label>Talaba kodi / ID</label>
-            <input type="text" name="student_id" placeholder="12345 yoki T001">
+            <input type="text" name="student_id" placeholder="12345 yoki T001" value="{{ edit_user.student_id|default:'' }}">
             <label>Telefon</label>
-            <input type="text" name="phone" placeholder="+998...">
+            <input type="text" name="phone" placeholder="+998..." value="{{ edit_user.phone|default:'' }}">
             <label>Email</label>
-            <input type="email" name="email" placeholder="example@mail.com">
+            <input type="email" name="email" placeholder="example@mail.com" value="{{ edit_user.email|default:'' }}">
             <label>Ota-ona / Vasiy</label>
-            <input type="text" name="parent_name" placeholder="Ism familiya">
+            <input type="text" name="parent_name" placeholder="Ism familiya" value="{{ edit_user.parent_name|default:'' }}">
             <label>Tug'ilgan sana</label>
-            <input type="date" name="birthday">
+            <input type="date" name="birthday" value="{{ edit_user.birthday|default:'' }}">
             <label>Manzil</label>
-            <input type="text" name="address" placeholder="Shahar, ko'cha ...">
-            <button class="btn" type="submit">Saqlash</button>
+            <input type="text" name="address" placeholder="Shahar, ko'cha ..." value="{{ edit_user.address|default:'' }}">
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <button class="btn" type="submit">{% if edit_user %}Yangilash{% else %}Saqlash{% endif %}</button>
+                {% if edit_user %}
+                    <a class="btn btn-secondary" href="{% url 'admin_bulimi' %}">Bekor qilish</a>
+                {% endif %}
+            </div>
         </form>
     </section>
 
-    <section>
+    <section class="section">
         <h3>Barcha foydalanuvchilar</h3>
         <table>
             <thead>
@@ -87,6 +103,7 @@
                     <th>Talaba kodi</th>
                     <th>Telefon</th>
                     <th>Email</th>
+                    <th>Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -100,9 +117,18 @@
                         <td>{{ person.student_id }}</td>
                         <td>{{ person.phone }}</td>
                         <td>{{ person.email }}</td>
+                        <td class="table-actions">
+                            <a class="btn btn-edit" href="{% url 'admin_bulimi' %}?edit_id={{ person.id }}">Tahrirlash</a>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="user_id" value="{{ person.id }}">
+                                <button class="btn btn-delete" type="submit">O'chirish</button>
+                            </form>
+                        </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="4">Foydalanuvchi yo'q.</td></tr>
+                    <tr><td colspan="9">Foydalanuvchi yo'q.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -98,7 +98,10 @@ def admin_boshqaruv_bulimi(request):
     if user is None or user.role != Person.ROLE_ADMIN:
         return redirect('enter')
 
+    edit_user = None
     if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+        user_id = request.POST.get('user_id')
         surname = request.POST.get('surname', '').strip()
         login = request.POST.get('login', '').strip()
         role = request.POST.get('role', '')
@@ -111,29 +114,67 @@ def admin_boshqaruv_bulimi(request):
         birthday = request.POST.get('birthday', '').strip()
         address = request.POST.get('address', '').strip()
 
-        if surname and login and role in [Person.ROLE_ADMIN, Person.ROLE_TEACHER, Person.ROLE_STUDENT]:
-            if Person.objects.filter(login=login).exists():
-                messages.error(request, 'Bu login avvaldan mavjud.')
+        if action == 'delete' and user_id:
+            person_to_delete = Person.objects.filter(id=user_id).first()
+            if person_to_delete:
+                person_to_delete.delete()
+                messages.success(request, 'Foydalanuvchi o‘chirildi.')
             else:
-                person = Person.objects.create(
-                    surname=surname,
-                    login=login,
-                    role=role,
-                    group=group,
-                    class_name=class_name,
-                    student_id=student_id,
-                    phone=phone,
-                    email=email,
-                    parent_name=parent_name,
-                    birthday=birthday or None,
-                    address=address,
-                )
-                messages.success(request, 'Yangi foydalanuvchi qo‘shildi.')
+                messages.error(request, 'Foydalanuvchi topilmadi.')
         else:
-            messages.error(request, 'Toʻliq maʼlumot kiriting.')
+            if user_id:
+                edit_user = Person.objects.filter(id=user_id).first()
+
+            if surname and login and role in [Person.ROLE_ADMIN, Person.ROLE_TEACHER, Person.ROLE_STUDENT]:
+                if edit_user:
+                    if Person.objects.filter(login=login).exclude(id=edit_user.id).exists():
+                        messages.error(request, 'Bu login avvaldan mavjud.')
+                    else:
+                        edit_user.surname = surname
+                        edit_user.login = login
+                        edit_user.role = role
+                        edit_user.group = group
+                        edit_user.class_name = class_name
+                        edit_user.student_id = student_id
+                        edit_user.phone = phone
+                        edit_user.email = email
+                        edit_user.parent_name = parent_name
+                        edit_user.birthday = birthday or None
+                        edit_user.address = address
+                        edit_user.save()
+                        messages.success(request, 'Foydalanuvchi yangilandi.')
+                        edit_user = None
+                else:
+                    if Person.objects.filter(login=login).exists():
+                        messages.error(request, 'Bu login avvaldan mavjud.')
+                    else:
+                        Person.objects.create(
+                            surname=surname,
+                            login=login,
+                            role=role,
+                            group=group,
+                            class_name=class_name,
+                            student_id=student_id,
+                            phone=phone,
+                            email=email,
+                            parent_name=parent_name,
+                            birthday=birthday or None,
+                            address=address,
+                        )
+                        messages.success(request, 'Yangi foydalanuvchi qo‘shildi.')
+            else:
+                messages.error(request, 'Toʻliq maʼlumot kiriting.')
+
+    edit_id = request.GET.get('edit_id')
+    if edit_id:
+        edit_user = Person.objects.filter(id=edit_id).first()
 
     people = Person.objects.order_by('role', 'group', 'surname')
-    return render(request, 'admin_dashboard.html', {'user': user, 'people': people})
+    return render(request, 'admin_dashboard.html', {
+        'user': user,
+        'people': people,
+        'edit_user': edit_user,
+    })
 
 
 def teacher_boshqaruv_bulimi(request):
