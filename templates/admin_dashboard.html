@@ -56,6 +56,20 @@
             </select>
             <label>Guruh</label>
             <input type="text" name="group" placeholder="A, B, ...">
+            <label>Sinf nomi</label>
+            <input type="text" name="class_name" placeholder="Guruh 1, 2A, 3B ...">
+            <label>Talaba kodi / ID</label>
+            <input type="text" name="student_id" placeholder="12345 yoki T001">
+            <label>Telefon</label>
+            <input type="text" name="phone" placeholder="+998...">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="example@mail.com">
+            <label>Ota-ona / Vasiy</label>
+            <input type="text" name="parent_name" placeholder="Ism familiya">
+            <label>Tug'ilgan sana</label>
+            <input type="date" name="birthday">
+            <label>Manzil</label>
+            <input type="text" name="address" placeholder="Shahar, ko'cha ...">
             <button class="btn" type="submit">Saqlash</button>
         </form>
     </section>
@@ -69,6 +83,10 @@
                     <th>Login</th>
                     <th>Rol</th>
                     <th>Guruh</th>
+                    <th>Sinf</th>
+                    <th>Talaba kodi</th>
+                    <th>Telefon</th>
+                    <th>Email</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,6 +96,10 @@
                         <td>{{ person.login }}</td>
                         <td>{{ person.role }}</td>
                         <td>{{ person.group }}</td>
+                        <td>{{ person.class_name }}</td>
+                        <td>{{ person.student_id }}</td>
+                        <td>{{ person.phone }}</td>
+                        <td>{{ person.email }}</td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="4">Foydalanuvchi yo'q.</td></tr>

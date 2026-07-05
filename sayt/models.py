@@ -16,7 +16,13 @@ class Person(models.Model):
     login = models.CharField(max_length=50, unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     group = models.CharField(max_length=50, blank=True)
+    class_name = models.CharField(max_length=50, blank=True)
+    student_id = models.CharField(max_length=50, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
+    parent_name = models.CharField(max_length=100, blank=True)
+    birthday = models.DateField(null=True, blank=True)
+    address = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -103,12 +103,31 @@ def admin_boshqaruv_bulimi(request):
         login = request.POST.get('login', '').strip()
         role = request.POST.get('role', '')
         group = request.POST.get('group', '').strip()
+        class_name = request.POST.get('class_name', '').strip()
+        student_id = request.POST.get('student_id', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        email = request.POST.get('email', '').strip()
+        parent_name = request.POST.get('parent_name', '').strip()
+        birthday = request.POST.get('birthday', '').strip()
+        address = request.POST.get('address', '').strip()
 
         if surname and login and role in [Person.ROLE_ADMIN, Person.ROLE_TEACHER, Person.ROLE_STUDENT]:
             if Person.objects.filter(login=login).exists():
                 messages.error(request, 'Bu login avvaldan mavjud.')
             else:
-                Person.objects.create(surname=surname, login=login, role=role, group=group)
+                person = Person.objects.create(
+                    surname=surname,
+                    login=login,
+                    role=role,
+                    group=group,
+                    class_name=class_name,
+                    student_id=student_id,
+                    phone=phone,
+                    email=email,
+                    parent_name=parent_name,
+                    birthday=birthday or None,
+                    address=address,
+                )
                 messages.success(request, 'Yangi foydalanuvchi qo‘shildi.')
         else:
             messages.error(request, 'Toʻliq maʼlumot kiriting.')
