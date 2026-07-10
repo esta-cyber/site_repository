@@ -5,16 +5,35 @@
     <title>O'qituvchi paneli</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'style/css/teacher.css' %}">
+    <style>
+        /* Ixcham va chiroyli ko'rinish uchun qo'shimcha stillar */
+        .group-badge { display: inline-block; padding: 0.5rem 1rem; background: #2b6cb0; color: white; border-radius: 6px; text-decoration: none; margin-right: 0.5rem; font-weight: bold; transition: 0.2s; }
+        .group-badge:hover { background: #3182ce; }
+        .group-badge.active { background: #48bb78; }
+        .group-container { background: #1a202c; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2d3748; }
+        
+        /* Jadvalni ixchamlashtirish */
+        .compact-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .compact-table th, .compact-table td { padding: 6px 12px; text-align: left; border-bottom: 1px solid #2d3748; }
+        .compact-table tr:hover { background-color: #2d3748; }
+        
+        .btn-mini { padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-mini-success { background: #38a169; color: white; }
+        .btn-mini-star { background: #ecc94b; color: #1a202c; }
+        .status-check { color: #48bb78; font-weight: bold; font-size: 0.85rem; }
+        
+        .add-group-form input { padding: 0.4rem; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; }
+    </style>
 </head>
 <body class="ustoz">
-    <main class="page-shell">
-        <header class="page-header">
+    <main class="page-shell" style="max-width: 1000px; margin: 0 auto; padding: 15px;">
+        
+        <header class="page-header" style="margin-bottom: 15px;">
             <div class="page-title">
                 <div class="avatar">{{ teacher.surname|slice:":1" }}</div>
                 <div>
                     <p class="eyebrow">Ustoz paneli</p>
                     <h1>{{ teacher.surname }}</h1>
-                    <p class="meta">Guruh: <strong>{{ teacher.group }}</strong></p>
                 </div>
             </div>
             <div class="header-actions">
@@ -23,81 +42,109 @@
             </div>
         </header>
 
-        <section class="summary-grid">
-            <article>
-                <p class="label">Bugun ball olganlar</p>
-                <h2>{{ students_awarded_today }}</h2>
-            </article>
-            <article>
-                <p class="label">Guruhdagi talaba</p>
-                <h2>{{ students_count }}</h2>
-            </article>
-            <article>
-                <p class="label">Bugungi tokenlar</p>
-                <h2>{{ group_tokens_today }} / 10</h2>
-            </article>
-        </section>
-
         {% if messages %}
-            <section class="alerts">
+            <section class="alerts" style="margin-bottom: 15px;">
                 {% for message in messages %}
                     <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
                 {% endfor %}
             </section>
         {% endif %}
 
-        <section class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Talaba</th>
-                        <th>Ball</th>
-                        <th>Tokenlar</th>
-                        <th>Amallar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                        <tr onclick="window.location.href='{{ request.path }}?view_student={{ student.id }}'">
-                            <td>{{ student.surname }}</td>
-                            <td>{{ student.total_points }}</td>
-                            <td>{{ student.total_tokens }}</td>
-                            <td>
-                                <form method="post" class="action-row" onclick="event.stopPropagation()">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="student_id" value="{{ student.id }}">
-                                    <input type="hidden" name="action" value="give_points">
-                                    <label class="sr-only">Ball</label>
-                                    <input type="number" name="amount" min="1" max="50" value="1">
-                                    <button class="btn btn-small" type="submit">Ball ber</button>
-                                </form>
-                                <form method="post" class="action-row" onclick="event.stopPropagation()">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="student_id" value="{{ student.id }}">
-                                    <input type="hidden" name="action" value="give_token">
-                                    <button class="btn btn-small btn-secondary" type="submit">Token ber</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="4">Guruhda talaba yo'q.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
-
-        {% if selected_student %}
-        <section class="detail-panel">
-            <h2>Tanlangan talaba</h2>
-            <div class="detail-grid">
-                <div><span>Ism</span><strong>{{ selected_student.surname }}</strong></div>
-                <div><span>Guruh</span><strong>{{ selected_student.group }}</strong></div>
-                <div><span>Jami ballar</span><strong>{{ selected_student.total_points }}</strong></div>
-                <div><span>Jami tokenlar</span><strong>{{ selected_student.total_tokens }}</strong></div>
-                <div><span>Login</span><strong>{{ selected_student.login }}</strong></div>
+        <section class="group-container">
+            <h3 style="margin-top: 0; margin-bottom: 10px; color: #e2e8f0; font-size: 1.1rem;">Siz dars o'tadigan guruhlar:</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                {% for g in teacher_groups %}
+                    <a class="group-badge {% if selected_group == g %}active{% endif %}" href="?group={{ g }}">{{ g }}</a>
+                {% empty %}
+                    <span style="color: #a0aec0;">Hozircha guruh yo'q.</span>
+                {% endfor %}
+                
+                <form method="post" class="add-group-form" style="display: inline-flex; gap: 5px; margin-left: auto;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_group">
+                    <input type="text" name="new_group" placeholder="Yangi guruh nomi" required>
+                    <button type="submit" class="btn-mini btn-mini-success" style="padding: 6px 12px;">+</button>
+                </form>
             </div>
         </section>
+
+        {% if selected_group %}
+            <h2 style="color: #63b3ed; font-size: 1.3rem; margin-bottom: 10px;">Guruh: {{ selected_group }}</h2>
+            
+            <section class="summary-grid" style="gap: 10px; margin-bottom: 15px;">
+                <article style="padding: 10px;">
+                    <p class="label" style="font-size: 0.8rem;">Bugun ball olganlar</p>
+                    <h2 style="font-size: 1.5rem;">{{ students_awarded_today }}</h2>
+                </article>
+                <article style="padding: 10px;">
+                    <p class="label" style="font-size: 0.8rem;">Talabalar soni</p>
+                    <h2 style="font-size: 1.5rem;">{{ students_count }}</h2>
+                </article>
+                <article style="padding: 10px;">
+                    <p class="label" style="font-size: 0.8rem;">Bugungi tokenlar (Star)</p>
+                    <h2 style="font-size: 1.5rem;">{{ group_tokens_today }} / 10</h2>
+                </article>
+            </section>
+
+            <section class="table-wrap" style="background: #1a202c; border-radius: 8px; padding: 10px; border: 1px solid #2d3748;">
+                <table class="compact-table">
+                    <thead>
+                        <tr>
+                            <th>Talaba</th>
+                            <th style="width: 80px;">Jami Ball</th>
+                            <th style="width: 80px;">Jami Star</th>
+                            <th style="text-align: right; width: 280px;">Harakatlar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr>
+                                <td style="font-weight: 500; color: #e2e8f0;">{{ student.surname }}</td>
+                                <td style="color: #4299e1; font-weight: bold;">{{ student.total_points }}</td>
+                                <td style="color: #ecc94b; font-weight: bold;">{{ student.total_tokens }}</td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 10px; align-items: center;">
+                                        
+                                        {% if not student.has_points_today %}
+                                            <form method="post" style="display: inline-flex; gap: 4px; align-items: center;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                                <input type="hidden" name="action" value="give_points">
+                                                <input type="number" name="amount" min="1" max="50" value="1" style="width: 45px; padding: 2px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; text-align: center; font-size: 0.85rem;">
+                                                <button class="btn-mini btn-mini-success" type="submit">Ball ber</button>
+                                            </form>
+                                        {% else %}
+                                            <span class="status-check">✓ Ball berildi</span>
+                                        {% endif %}
+
+                                        {% if not student.has_token_today %}
+                                            {% if group_tokens_today < 10 %}
+                                                <form method="post" style="display: inline-block;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                                    <input type="hidden" name="action" value="give_token">
+                                                    <button class="btn-mini btn-mini-star" type="submit">Star ber</button>
+                                                </form>
+                                            {% else %}
+                                                <span style="color: #e53e3e; font-size: 0.8rem;">Limit (10/10)</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="status-check" style="color: #ecc94b;">★ Star berildi</span>
+                                        {% endif %}
+
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" style="text-align: center; color: #a0aec0;">Bu guruhda hali talabalar yo'q.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        {% else %}
+            <p style="text-align: center; color: #a0aec0; margin-top: 30px;">O'quvchilar ro'yxatini ko'rish uchun yuqoridagi guruhlardan birini tanlang.</p>
         {% endif %}
+
     </main>
 </body>
 </html>

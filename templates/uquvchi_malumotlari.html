@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ selected_student.surname }} - Ma'lumotlari</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style/css/teacher.css' %}">
+    <style>
+        .detail-container { max-width: 600px; margin: 2rem auto; padding: 20px; background: #181818; border: 1px solid #2d2d2d; border-radius: 12px; color: #e8e8e8; }
+        .info-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #222; }
+        .info-row span { color: #aaa; }
+        .actions-panel { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333; display: flex; gap: 1rem; }
+        .back-link { display: inline-block; margin-bottom: 1rem; color: #3a76d2; text-decoration: none; }
+        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; }
+        .alert-success { background: #1e4226; color: #c8ffcb; }
+        .alert-error { background: #4f1c1c; color: #ffd6d6; }
+    </style>
+</head>
+<body class="ustoz" style="padding: 20px;">
+
+    <div class="detail-container">
+        <a class="back-link" href="{% url 'teacher_bulimi' %}">← Ustoz paneliga qaytish</a>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <h2>Talaba: {{ selected_student.surname }}</h2>
+        <p style="color: #888;">Guruh: {{ selected_student.group }}</p>
+
+        <div class="info-row"><span>Login:</span> <strong>{{ selected_student.login }}</strong></div>
+        <div class="info-row"><span>Jami ballar:</span> <strong>{{ selected_student.total_points }}</strong></div>
+        <div class="info-row"><span>Jami tokenlar (Star):</span> <strong>{{ selected_student.total_tokens }}</strong></div>
+
+        <div class="actions-panel">
+            {# Agar bugun ball berilmagan bo'lsa, ball berish formasi ko'rinadi #}
+            {% if not already_awarded_today %}
+                <form method="post" style="display: inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="give_points">
+                    <input type="number" name="amount" min="1" max="50" value="1" style="padding: 0.4rem; width: 60px; background: #161616; color: white; border: 1px solid #333; border-radius: 4px;">
+                    <button class="btn btn-small" type="submit">Ball berish</button>
+                </form>
+            {% else %}
+                <p style="color: #4f7f18; font-size: 0.9rem; margin: 0; align-self: center;">✓ Bugun ball berilgan</p>
+            {% endif %}
+
+            {# Agar bugun token/star berilmagan bo'lsa va limit tugamagan bo'lsa #}
+            {% if not already_given_token %}
+                {% if group_tokens_today < 10 %}
+                    <form method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="give_token">
+                        <button class="btn btn-small btn-secondary" type="submit">Star (Token) berish</button>
+                    </form>
+                {% else %}
+                    <p style="color: #b30000; font-size: 0.9rem; margin: 0; align-self: center;">X Kunlik token limiti tugadi (10/10)</p>
+                {% endif %}
+            {% else %}
+                <p style="color: #4f7f18; font-size: 0.9rem; margin: 0; align-self: center;">✓ Bugun Star berilgan</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

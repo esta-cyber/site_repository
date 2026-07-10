@@ -99,29 +99,59 @@ def admin_boshqaruv_bulimi(request):
         return redirect('enter')
 
     edit_user = None
+    
+    # POST so'rovlarini qayta ishlash
     if request.method == 'POST':
         action = request.POST.get('action', 'save')
         user_id = request.POST.get('user_id')
-        surname = request.POST.get('surname', '').strip()
-        login = request.POST.get('login', '').strip()
-        role = request.POST.get('role', '')
-        group = request.POST.get('group', '').strip()
-        class_name = request.POST.get('class_name', '').strip()
-        student_id = request.POST.get('student_id', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        email = request.POST.get('email', '').strip()
-        parent_name = request.POST.get('parent_name', '').strip()
-        birthday = request.POST.get('birthday', '').strip()
-        address = request.POST.get('address', '').strip()
-
+        
+        # --- FOYDALANUVCHINI O'CHIRISH ---
         if action == 'delete' and user_id:
             person_to_delete = Person.objects.filter(id=user_id).first()
             if person_to_delete:
                 person_to_delete.delete()
-                messages.success(request, 'Foydalanuvchi o‘chirildi.')
+                messages.success(request, 'Foydalanuvchi muvaffaqiyatli o‘chirildi.')
             else:
                 messages.error(request, 'Foydalanuvchi topilmadi.')
+            return redirect('admin_bulimi')
+            
+        # --- GURUHNI BUTUNLAY O'CHIRISH (YANGI LOGIKA) ---
+        elif action == 'delete_group_global':
+            group_to_delete = request.POST.get('group_name', '').strip()
+            if group_to_delete:
+                # 1. Shu guruhga tegishli barcha foydalanuvchilarning guruh maydonini tozalaymiz
+                students_in_group = Person.objects.filter(group=group_to_delete)
+                for member in students_in_group:
+                    member.group = ""
+                    member.save()
+                
+                # 2. Ustozlarning ichidan ham bu guruhni o'chirib tashlaymiz
+                teachers = Person.objects.filter(role=Person.ROLE_TEACHER)
+                for t in teachers:
+                    if t.group:
+                        g_list = [g.strip() for g in t.group.split(',') if g.strip()]
+                        if group_to_delete in g_list:
+                            g_list.remove(group_to_delete)
+                            t.group = ", ".join(g_list)
+                            t.save()
+                            
+                messages.success(request, f"'{group_to_delete}' guruhi tizimdan butunlay o'chirildi (Foydalanuvchilar guruhdan chiqarildi).")
+            return redirect('admin_bulimi')
+
+        # --- FOYDALANUVCHI QO'SHISH YOKI TAHRIRLASH ---
         else:
+            surname = request.POST.get('surname', '').strip()
+            login = request.POST.get('login', '').strip()
+            role = request.POST.get('role', '')
+            group = request.POST.get('group', '').strip()
+            class_name = request.POST.get('class_name', '').strip()
+            student_id = request.POST.get('student_id', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            parent_name = request.POST.get('parent_name', '').strip()
+            birthday = request.POST.get('birthday', '').strip()
+            address = request.POST.get('address', '').strip()
+
             if user_id:
                 edit_user = Person.objects.filter(id=user_id).first()
 
@@ -142,108 +172,144 @@ def admin_boshqaruv_bulimi(request):
                         edit_user.birthday = birthday or None
                         edit_user.address = address
                         edit_user.save()
-                        messages.success(request, 'Foydalanuvchi yangilandi.')
-                        edit_user = None
+                        messages.success(request, 'Foydalanuvchi ma’lumotlari yangilandi.')
+                        return redirect('admin_bulimi')
                 else:
                     if Person.objects.filter(login=login).exists():
                         messages.error(request, 'Bu login avvaldan mavjud.')
                     else:
                         Person.objects.create(
-                            surname=surname,
-                            login=login,
-                            role=role,
-                            group=group,
-                            class_name=class_name,
-                            student_id=student_id,
-                            phone=phone,
-                            email=email,
-                            parent_name=parent_name,
-                            birthday=birthday or None,
-                            address=address,
+                            surname=surname, login=login, role=role, group=group,
+                            class_name=class_name, student_id=student_id, phone=phone,
+                            email=email, parent_name=parent_name, birthday=birthday or None,
+                            address=address
                         )
                         messages.success(request, 'Yangi foydalanuvchi qo‘shildi.')
+                        return redirect('admin_bulimi')
             else:
                 messages.error(request, 'Toʻliq maʼlumot kiriting.')
 
+    # Tahrirlash uchun GET so'rovi kelganda
     edit_id = request.GET.get('edit_id')
     if edit_id:
         edit_user = Person.objects.filter(id=edit_id).first()
 
+    # Bazadagi mavjud barcha guruhlarni avtomatik aniqlash (Takrorlanmas qilib)
+    all_people = Person.objects.all()
+    existing_groups = set()
+    for p in all_people:
+        if p.group:
+            # Agar vergul bilan yozilgan bo'lsa ajratamiz
+            parts = [g.strip() for g in p.group.split(',') if g.strip()]
+            for part in parts:
+                existing_groups.add(part)
+
     people = Person.objects.order_by('role', 'group', 'surname')
+    
     return render(request, 'admin_dashboard.html', {
         'user': user,
         'people': people,
         'edit_user': edit_user,
+        'existing_groups': sorted(list(existing_groups)), # Guruhlar ro'yxati shablonga o'tadi
     })
 
-
+# ------------------------------------------------------------------------------------
 def teacher_boshqaruv_bulimi(request):
     teacher = get_current_person(request)
     if teacher is None or teacher.role != Person.ROLE_TEACHER:
         return redirect('enter')
 
     today = timezone.localdate()
-    # No per-teacher daily cap. We track distinct students awarded today (for info only).
-    students_awarded_today = PointAward.objects.filter(teacher=teacher, created_at__date=today).values('student').distinct().count()
-    group_tokens_today = TokenAward.objects.filter(student__group=teacher.group, created_at__date=today).count()
-    remaining_tokens = max(0, 10 - group_tokens_today)
 
-    students = Person.objects.filter(role=Person.ROLE_STUDENT, group=teacher.group).order_by('surname')
-    selected_student = None
-    selected_student_id = request.GET.get('view_student')
-    if selected_student_id:
-        selected_student = Person.objects.filter(
-            id=selected_student_id,
-            role=Person.ROLE_STUDENT,
-            group=teacher.group,
-        ).first()
+    # 1. Ustozning guruhlari ro'yxatini shakllantirish (Vergul bilan ajratilgan bo'lsa ro'yxat qilamiz)
+    # Agar ustozning guruh maydonida bir nechta guruh bo'lsa (masalan: "guruh1, guruh2")
+    teacher_groups = [g.strip() for g in teacher.group.split(',') if g.strip()]
+    if not teacher_groups and teacher.group:
+        teacher_groups = [teacher.group]
 
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        student_id = request.POST.get('student_id')
-        student = Person.objects.filter(id=student_id, role=Person.ROLE_STUDENT, group=teacher.group).first()
-
-        if not student:
-            messages.error(request, 'Talaba topilmadi yoki guruh mos emas.')
-        elif action == 'give_points':
-            # Enforce: a student can receive points at most once per day (from any teacher),
-            # and a single award cannot exceed 50 points.
-            already_awarded_today = PointAward.objects.filter(student=student, created_at__date=today).exists()
-            if already_awarded_today:
-                messages.error(request, 'Bugun ushbu talabaga allaqachon ball berilgan — yana berib bo‘lmaydi.')
+    # Yangi guruh qo'shish logikasi
+    if request.method == 'POST' and request.POST.get('action') == 'add_group':
+        new_group_name = request.POST.get('new_group', '').strip()
+        if new_group_name:
+            if teacher.group:
+                teacher.group = f"{teacher.group}, {new_group_name}"
             else:
-                try:
-                    amount = int(request.POST.get('amount', '0'))
-                except ValueError:
-                    amount = 0
+                teacher.group = new_group_name
+            teacher.save()
+            messages.success(request, f"Yangi {new_group_name} muvaffaqiyatli qo'shildi.")
+            return redirect('teacher_bulimi')
 
-                if amount <= 0 or amount > 50:
-                    messages.error(request, 'Iltimos, 1 dan 50 gacha ball kiriting.')
-                else:
-                    PointAward.objects.create(teacher=teacher, student=student, amount=amount)
-                    messages.success(request, f'{student.surname}ga {amount} ball berildi.')
-                    return redirect('teacher_bulimi')
-        elif action == 'give_token':
-            already_given = TokenAward.objects.filter(teacher=teacher, student=student, created_at__date=today).exists()
-            if already_given:
-                messages.error(request, 'Bugun ushbu talabaga token allaqachon berilgan.')
-            elif group_tokens_today >= 10:
-                messages.error(request, 'Bugun guruh uchun 10 token limitiga yetildi.')
-            else:
-                TokenAward.objects.create(teacher=teacher, student=student)
-                messages.success(request, f'{student.surname}ga token berildi.')
-                return redirect('teacher_bulimi')
-        else:
-            messages.error(request, 'Noto‘g‘ri amal tanlandi.')
+    # Tanlangan guruhni aniqlash
+    selected_group = request.GET.get('group')
+    
+    # Agar guruh tanlangan bo'lsa, o'sha guruh ma'lumotlarini yuklaymiz
+    students = None
+    group_tokens_today = 0
+    remaining_tokens = 10
+    students_awarded_today = 0
+
+    if selected_group:
+        students = Person.objects.filter(role=Person.ROLE_STUDENT, group=selected_group).order_by('surname')
+        group_tokens_today = TokenAward.objects.filter(student__group=selected_group, created_at__date=today).count()
+        remaining_tokens = max(0, 10 - group_tokens_today)
+        students_awarded_today = PointAward.objects.filter(teacher=teacher, created_at__date=today, student__group=selected_group).values('student').distinct().count()
+
+        # Ball yoki Token berish amallari (Sahifa ichida)
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            student_id = request.POST.get('student_id')
+            student = Person.objects.filter(id=student_id, role=Person.ROLE_STUDENT, group=selected_group).first()
+
+            if student:
+                if action == 'give_points':
+                    already_awarded = PointAward.objects.filter(student=student, created_at__date=today).exists()
+                    if already_awarded:
+                        messages.error(request, 'Bugun ushbu talabaga allaqachon ball berilgan.')
+                    else:
+                        try:
+                            amount = int(request.POST.get('amount', '1'))
+                        except ValueError:
+                            amount = 1
+                        if 1 <= amount <= 50:
+                            PointAward.objects.create(teacher=teacher, student=student, amount=amount)
+                            messages.success(request, f"{student.surname}ga {amount} ball berildi.")
+                        else:
+                            messages.error(request, '1 dan 50 gacha ball kiriting.')
+                    return redirect(f"{request.path}?group={selected_group}")
+
+                elif action == 'give_token':
+                    already_token = TokenAward.objects.filter(student=student, created_at__date=today).exists()
+                    if already_token:
+                        messages.error(request, 'Bugun ushbu talabaga star berilgan.')
+                    elif group_tokens_today >= 10:
+                        messages.error(request, 'Bugun guruh limiti tugadi (10/10).')
+                    else:
+                        TokenAward.objects.create(teacher=teacher, student=student)
+                        messages.success(request, f"{student.surname}ga Star (Token) berildi.")
+                    return redirect(f"{request.path}?group={selected_group}")
+
+    # Har bir talaba uchun bugun nima berilganini shablonda oson tekshirish uchun belgi qo'shish
+    students_data = []
+    if students:
+        for s in students:
+            students_data.append({
+                'id': s.id,
+                'surname': s.surname,
+                'total_points': s.total_points(),
+                'total_tokens': s.total_tokens(),
+                'has_points_today': PointAward.objects.filter(student=s, created_at__date=today).exists(),
+                'has_token_today': TokenAward.objects.filter(student=s, created_at__date=today).exists(),
+            })
 
     context = {
         'teacher': teacher,
-        'students': students,
+        'teacher_groups': teacher_groups,
+        'selected_group': selected_group,
+        'students': students_data,
         'students_awarded_today': students_awarded_today,
-        'students_count': students.count(),
+        'students_count': students.count() if students else 0,
         'group_tokens_today': group_tokens_today,
         'remaining_tokens': remaining_tokens,
-        'selected_student': selected_student,
     }
     return render(request, 'teacher_dashboard.html', context)
 

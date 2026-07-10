@@ -2,8 +2,329 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>Admin paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Boshqaruv Paneli</title>
     <style>
+        /* Ustoz panelidan butunlay mustaqil, maxsus Admin dizayni */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #0f172a; /* To'q ko'k-kulrang fon */
+            color: #f1f5f9; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .admin-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        /* Header qismi */
+        .admin-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #1e293b; 
+            padding: 15px 25px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            border: 1px solid #334155;
+        }
+        .admin-profile { display: flex; align-items: center; gap: 15px; }
+        .admin-avatar { 
+            background: #ef4444; 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            font-size: 1.2rem;
+        }
+        .admin-title h1 { margin: 0; font-size: 1.3rem; color: #f8fafc; }
+        .admin-title p { margin: 0; font-size: 0.8rem; color: #94a3b8; }
+        
+        /* Tugmalar */
+        .btn-logout { 
+            background: #ef4444; 
+            color: white; 
+            text-decoration: none; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .btn-logout:hover { background: #dc2626; }
+        
+        .btn-primary { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+            width: 100%;
+        }
+        .btn-primary:hover { background: #2563eb; }
+        
+        .btn-cancel { 
+            background: #475569; 
+            color: white; 
+            text-decoration: none; 
+            padding: 10px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Panellar */
+        .card { 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            padding: 20px; 
+            border-radius: 12px; 
+        }
+        .card-title { 
+            margin-top: 0; 
+            margin-bottom: 15px; 
+            font-size: 1.1rem; 
+            color: #38bdf8; 
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+        
+        /* Global guruhlar qismi */
+        .group-box { display: flex; flex-wrap: wrap; gap: 8px; }
+        .group-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            background: #334155; 
+            border: 1px solid #475569; 
+            border-radius: 6px; 
+            overflow: hidden; 
+        }
+        .group-text { padding: 4px 10px; font-size: 0.85rem; font-weight: 600; }
+        .group-del-btn { 
+            background: #ef4444; 
+            color: white; 
+            border: none; 
+            padding: 4px 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .group-del-btn:hover { background: #dc2626; }
+
+        /* Grid tartibi */
+        .admin-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+            margin-top: 25px;
+        }
+        @media (min-width: 768px) { .admin-grid { grid-template-columns: 1fr 2fr; } }
+        
+        /* Forma elementlari */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 8px; 
+            background: #0f172a; 
+            border: 1px solid #334155; 
+            color: white; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #3b82f6; outline: none; }
+        
+        /* Jadval */
+        .table-responsive { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .admin-table th { background: #0f172a; color: #94a3b8; padding: 10px; text-align: left; }
+        .admin-table td { padding: 10px; border-bottom: 1px solid #334155; }
+        .admin-table tr:hover { background: #253346; }
+        
+        /* Rol badgelari */
+        .role-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .role-admin { background: #ef4444; color: white; }
+        .role-teacher { background: #3b82f6; color: white; }
+        .role-student { background: #10b981; color: white; }
+
+        /* Xabarnomalar */
+        .alert-box { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; }
+        .alert-success { background: #065f46; color: #34d399; border: 1px solid #047857; }
+        .alert-error { background: #991b1b; color: #fca5a5; border: 1px solid #b91c1c; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        
+        <!-- ADMINDAGI MUSTAQIL HEADER -->
+        <header class="admin-header">
+            <div class="admin-profile">
+                <div class="admin-avatar">A</div>
+                <div class="admin-title">
+                    <p>Tizim Administratori Bo'limi</p>
+                    <h1>{{ user.surname }}</h1>
+                </div>
+            </div>
+            <div>
+                <a class="btn-logout" href="{% url 'logout' %}">Tizimdan chiqish</a>
+            </div>
+        </header>
+
+        <!-- XABARLAR -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-box {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- FAQAT ADMIN KO'RA OLADIGAN GLOBAL GURUXLARNI O'CHIRISH PANELI -->
+        <section class="card">
+            <h3 class="card-title">Tizimdagi barcha guruhlar ro'yxati (Nazorat paneli)</h3>
+            <div class="group-box">
+                {% for g_name in existing_groups %}
+                    <div class="group-badge">
+                        <span class="group-text">{{ g_name }}</span>
+                        <form method="post" style="display: inline;" onsubmit="return confirm('Haqiqatdan ham «{{ g_name }}» guruhini butunlay o‘chirmoqchimisiz? Guruhdagi barcha o‘quvchilar guruhsiz qoladi.');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_group_global">
+                            <input type="hidden" name="group_name" value="{{ g_name }}">
+                            <button type="submit" class="group-del-btn">×</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">Hozircha bazada hech qanday guruh aniqlanmadi.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ASOSIY QISM: GRID -->
+        <div class="admin-grid">
+            
+            <!-- CHAP TOMON: FOYDALANUVChI QO'SHISH/TAHRIRLASH -->
+            <div class="card">
+                <h3 class="card-title">
+                    {% if edit_user %}Ma'lumotlarni tahrirlash{% else %}Yangi foydalanuvchi qo'shish{% endif %}
+                </h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if edit_user %}
+                        <input type="hidden" name="user_id" value="{{ edit_user.id }}">
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label>Familiya va Ism</label>
+                        <input type="text" name="surname" value="{{ edit_user.surname|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Login (Tizimga kirish uchun)</label>
+                        <input type="text" name="login" value="{{ edit_user.login|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Foydalanuvchi roli</label>
+                        <select name="role" required>
+                            <option value="student" {% if edit_user.role == 'student' %}selected{% endif %}>O'quvchi (Student)</option>
+                            <option value="teacher" {% if edit_user.role == 'teacher' %}selected{% endif %}>O'qituvchi (Teacher)</option>
+                            <option value="admin" {% if edit_user.role == 'admin' %}selected{% endif %}>Administrator (Admin)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Guruh nomi (Ustozlar uchun vergul bilan: 101, 102)</label>
+                        <input type="text" name="group" value="{{ edit_user.group|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sinf nomi (Ixtiyoriy)</label>
+                        <input type="text" name="class_name" value="{{ edit_user.class_name|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>ID Raqami (Ixtiyoriy)</label>
+                        <input type="text" name="student_id" value="{{ edit_user.student_id|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefon raqami (Ixtiyoriy)</label>
+                        <input type="text" name="phone" value="{{ edit_user.phone|default:'' }}">
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn-primary">Saqlash</button>
+                        {% if edit_user %}
+                            <a href="{% url 'admin_bulimi' %}" class="btn-cancel">Bekor qilish</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- O'NG TOMON: BARCHA FOYDALANUVCHILAR JADVALI -->
+            <div class="card">
+                <h3 class="card-title">Tizim a'zolari ro'yxati</h3>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Foydalanuvchi</th>
+                                <th>Login</th>
+                                <th>Roli</th>
+                                <th>Guruhi</th>
+                                <th style="text-align: right;">Boshqaruv</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for person in people %}
+                                <tr>
+                                    <td style="font-weight: 600;">{{ person.surname }}</td>
+                                    <td style="color: #cbd5e1;">{{ person.login }}</td>
+                                    <td>
+                                        {% if person.role == 'admin' %}
+                                            <span class="role-badge role-admin">Admin</span>
+                                        {% elif person.role == 'teacher' %}
+                                            <span class="role-badge role-teacher">Ustoz</span>
+                                        {% else %}
+                                            <span class="role-badge role-student">O'quvchi</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="color: #38bdf8; font-weight: bold;">{{ person.group|default:"-" }}</td>
+                                    <td style="text-align: right;">
+                                        <div style="display: inline-flex; gap: 6px;">
+                                            <!-- Tahrirlash -->
+                                            <a href="?edit_id={{ person.id }}" style="background: #3b82f6; color: white; text-decoration: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">Tahrirlash</a>
+                                            
+                                            <!-- O'chirish -->
+                                            {% if person.id != user.id %}
+                                                <form method="post" style="display: inline;" onsubmit="return confirm('Haqiqatdan ham ushbu foydalanuvchini o‘chirib tashlamoqchimisiz?');">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="user_id" value="{{ person.id }}">
+                                                    <button type="submit" style="background: #ef4444; color: white; border: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer;">O'chirish</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" style="text-align: center; color: #94a3b8;">Tizimda hech kim mavjud emas.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
+
+    <!-- <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #121212; color: #e8e8e8; }
         header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 20px; background: #1f1f1f; border-bottom: 1px solid #333; }
         main { padding: 20px; }
@@ -24,114 +345,4 @@
         label { color: #ccc; }
         .table-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .section { background: #181818; border: 1px solid #2d2d2d; border-radius: 12px; padding: 20px; margin-bottom: 1rem; }
-    </style>
-</head>
-<body>
-<main>
-    <header>
-        <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:48px;height:48px;border-radius:50%;background:#cfe3ff;color:#2b6cb0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">
-                {{ user.surname|slice:":1" }}
-            </div>
-            <div>
-                <h2>Admin boshqaruv paneli</h2>
-                <p>{{ user.surname }} profili</p>
-            </div>
-        </div>
-        <div>
-            <a class="btn btn-logout" href="{% url 'logout' %}">Chiqish</a>
-        </div>
-    </header>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <section class="section">
-        <h3>{% if edit_user %}Foydalanuvchini tahrirlash{% else %}Yangi foydalanuvchi qo'shish{% endif %}</h3>
-        <form method="post" class="control">
-            {% csrf_token %}
-            <input type="hidden" name="user_id" value="{{ edit_user.id }}">
-            <label>Familiya</label>
-            <input type="text" name="surname" value="{{ edit_user.surname|default:'' }}" required>
-            <label>Login</label>
-            <input type="text" name="login" value="{{ edit_user.login|default:'' }}" required>
-            <label>Ro'yhat</label>
-            <select name="role" required>
-                <option value="">Tanlang</option>
-                <option value="admin" {% if edit_user.role == 'admin' %}selected{% endif %}>Admin</option>
-                <option value="teacher" {% if edit_user.role == 'teacher' %}selected{% endif %}>Teacher</option>
-                <option value="student" {% if edit_user.role == 'student' %}selected{% endif %}>Student</option>
-            </select>
-            <label>Guruh</label>
-            <input type="text" name="group" placeholder="A, B, ..." value="{{ edit_user.group|default:'' }}">
-            <label>Sinf nomi</label>
-            <input type="text" name="class_name" placeholder="Guruh 1, 2A, 3B ..." value="{{ edit_user.class_name|default:'' }}">
-            <label>Talaba kodi / ID</label>
-            <input type="text" name="student_id" placeholder="12345 yoki T001" value="{{ edit_user.student_id|default:'' }}">
-            <label>Telefon</label>
-            <input type="text" name="phone" placeholder="+998..." value="{{ edit_user.phone|default:'' }}">
-            <label>Email</label>
-            <input type="email" name="email" placeholder="example@mail.com" value="{{ edit_user.email|default:'' }}">
-            <label>Ota-ona / Vasiy</label>
-            <input type="text" name="parent_name" placeholder="Ism familiya" value="{{ edit_user.parent_name|default:'' }}">
-            <label>Tug'ilgan sana</label>
-            <input type="date" name="birthday" value="{{ edit_user.birthday|default:'' }}">
-            <label>Manzil</label>
-            <input type="text" name="address" placeholder="Shahar, ko'cha ..." value="{{ edit_user.address|default:'' }}">
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-                <button class="btn" type="submit">{% if edit_user %}Yangilash{% else %}Saqlash{% endif %}</button>
-                {% if edit_user %}
-                    <a class="btn btn-secondary" href="{% url 'admin_bulimi' %}">Bekor qilish</a>
-                {% endif %}
-            </div>
-        </form>
-    </section>
-
-    <section class="section">
-        <h3>Barcha foydalanuvchilar</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Familiya</th>
-                    <th>Login</th>
-                    <th>Rol</th>
-                    <th>Guruh</th>
-                    <th>Sinf</th>
-                    <th>Talaba kodi</th>
-                    <th>Telefon</th>
-                    <th>Email</th>
-                    <th>Amallar</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for person in people %}
-                    <tr>
-                        <td>{{ person.surname }}</td>
-                        <td>{{ person.login }}</td>
-                        <td>{{ person.role }}</td>
-                        <td>{{ person.group }}</td>
-                        <td>{{ person.class_name }}</td>
-                        <td>{{ person.student_id }}</td>
-                        <td>{{ person.phone }}</td>
-                        <td>{{ person.email }}</td>
-                        <td class="table-actions">
-                            <a class="btn btn-edit" href="{% url 'admin_bulimi' %}?edit_id={{ person.id }}">Tahrirlash</a>
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="user_id" value="{{ person.id }}">
-                                <button class="btn btn-delete" type="submit">O'chirish</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="9">Foydalanuvchi yo'q.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </section>
-</body>
-</html>
+    </style> -->
