@@ -37,3 +37,6 @@ class LoginFlowTests(TestCase):
             follow=True,
         )
         self.assertContains(response, 'Noto&#x27;g&#x27;ri surname yoki login')
+
+
+# ----------------------------------------------------------------------------------------------------------
