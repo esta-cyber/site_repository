@@ -1,5 +1,6 @@
 from django.db import models
 
+# ----------------------------------------------------------------------------
 
 class Person(models.Model):
     ROLE_ADMIN = 'admin'
@@ -34,6 +35,7 @@ class Person(models.Model):
     def total_tokens(self):
         return self.received_tokens.count()
 
+# ------------------------------------------------------------------------------------------
 
 class PointAward(models.Model):
     teacher = models.ForeignKey(
@@ -55,6 +57,7 @@ class PointAward(models.Model):
     def __str__(self):
         return f"{self.teacher.surname} → {self.student.surname}: {self.amount}"
 
+# -----------------------------------------------------------------------------------------------------------
 
 class TokenAward(models.Model):
     teacher = models.ForeignKey(
