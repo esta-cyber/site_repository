@@ -1,10 +1,8 @@
 from datetime import timedelta
-
 from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.contrib import messages
-
 from .models import Person, PointAward, TokenAward
 
 USERS = [
