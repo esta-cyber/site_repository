@@ -21,6 +21,7 @@ for group_index in range(1, 4):
             'group': f'guruh{group_index}',
         })
 
+# --------------------------------------------------------------------------------------------
 
 def get_or_sync_person(surname, login):
     person = Person.objects.filter(surname=surname, login=login).first()
@@ -37,6 +38,7 @@ def get_or_sync_person(surname, login):
         )
     return None
 
+# -------------------------------------------------------------------------------------------------
 
 def get_current_person(request):
     person_id = request.session.get('person_id')
@@ -211,7 +213,7 @@ def admin_boshqaruv_bulimi(request):
         'existing_groups': sorted(list(existing_groups)), # Guruhlar ro'yxati shablonga o'tadi
     })
 
-# ------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 def teacher_boshqaruv_bulimi(request):
     teacher = get_current_person(request)
     if teacher is None or teacher.role != Person.ROLE_TEACHER:
