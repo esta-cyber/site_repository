@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+# --------------------------------------------------------------------------------
 
 class LoginFlowTests(TestCase):
     def test_admin_login_redirects_to_admin_dashboard(self):
