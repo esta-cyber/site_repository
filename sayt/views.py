@@ -46,6 +46,7 @@ def get_current_person(request):
         return None
     return Person.objects.filter(id=person_id).first()
 
+# -------------------------------------------------------------------------------------------------
 
 def enter(request):
     error_message = None
@@ -87,11 +88,13 @@ def enter(request):
         'saved_login': saved_login,
     })
 
+# -------------------------------------------------------------------------------
 
 def logout_view(request):
     request.session.flush()
     return redirect('enter')
 
+# --------------------------------------------------------------------------------
 
 def admin_boshqaruv_bulimi(request):
     user = get_current_person(request)
@@ -331,6 +334,7 @@ def uquvchining_bulimi(request):
     }
     return render(request, 'uquvchining_bulimi.html', context)
 
+# -------------------------------------------------------------------------------
 
 def store_page(request):
     student = get_current_person(request)
@@ -339,6 +343,7 @@ def store_page(request):
 
     return render(request, 'store.html', {'student': student})
 
+# --------------------------------------------------------------------------------
 
 def chat_page(request):
     user = get_current_person(request)
