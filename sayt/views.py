@@ -59,7 +59,8 @@ def enter(request):
             return redirect('admin_bulimi')
         if existing_person.role == Person.ROLE_TEACHER:
             return redirect('teacher_bulimi')
-        return redirect('uquvchi_bulimi')
+        else:
+            return redirect('uquvchi_bulimi')
 
     if request.method == 'POST':
         surname = request.POST.get('surname', '').strip()
