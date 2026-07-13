@@ -23,58 +23,44 @@ for group_index in range(1, 4):
 
 # --------------------------------------------------------------------------------------------
 
-def get_or_sync_person(surname, login):
-    person = Person.objects.filter(surname=surname, login=login).first()
-    if person:
-        return person
-
-    static_user = next((u for u in USERS if u['surname'] == surname and u['login'] == login), None)
-    if static_user:
-        return Person.objects.create(
-            surname=static_user['surname'],
-            login=static_user['login'],
-            role=static_user['role'],
-            group=static_user.get('group', ''),
-        )
-    return None
-
-# -------------------------------------------------------------------------------------------------
-
-def get_current_person(request):
-    person_id = request.session.get('person_id')
-    if not person_id:
-        return None
-    return Person.objects.filter(id=person_id).first()
-
-# -------------------------------------------------------------------------------------------------
-
 def enter(request):
     error_message = None
     saved_surname = request.COOKIES.get('saved_surname', '')
     saved_login = request.COOKIES.get('saved_login', '')
 
-    existing_person = get_current_person(request)
-    if existing_person:
-        if existing_person.role == Person.ROLE_ADMIN:
-            return redirect('admin_bulimi')
-        if existing_person.role == Person.ROLE_TEACHER:
-            return redirect('teacher_bulimi')
-        else:
-            return redirect('uquvchi_bulimi')
+    person_id = request.session.get('person_id')
+    if person_id:
+        current_person = Person.objects.filter(id=person_id).first()
+        if current_person:
+            if current_person.role == 'admin':
+                return redirect('admin_bulimi')
+            elif current_person.role == 'teacher':
+                return redirect('teacher_bulimi')
+            else:
+                return redirect('uquvchi_bulimi')
 
     if request.method == 'POST':
         surname = request.POST.get('surname', '').strip()
         login = request.POST.get('login', '').strip()
-        person = get_or_sync_person(surname, login)
 
-        if person is None:
-            error_message = "Noto'g'ri familiya yoki login"
-        else:
+        person = Person.objects.filter(surname=surname, login=login).first()
+
+        if not person:
+            static_user = next((u for u in USERS if u['surname'] == surname and u['login'] == login), None)
+            if static_user:
+                person = Person.objects.create(
+                    surname=static_user['surname'],
+                    login=static_user['login'],
+                    role=static_user['role'],
+                    group=static_user.get('group', ''),
+                )
+
+        if person:
             request.session['person_id'] = person.id
-            response = None
-            if person.role == Person.ROLE_ADMIN:
+            
+            if person.role == 'admin':
                 response = redirect('admin_bulimi')
-            elif person.role == Person.ROLE_TEACHER:
+            elif person.role == 'teacher':
                 response = redirect('teacher_bulimi')
             else:
                 response = redirect('uquvchi_bulimi')
@@ -82,6 +68,8 @@ def enter(request):
             response.set_cookie('saved_surname', surname, max_age=30 * 24 * 60 * 60)
             response.set_cookie('saved_login', login, max_age=30 * 24 * 60 * 60)
             return response
+        else:
+            error_message = "Noto'g'ri familiya yoki login"
 
     return render(request, 'enter.html', {
         'error_message': error_message,
@@ -98,18 +86,20 @@ def logout_view(request):
 # --------------------------------------------------------------------------------
 
 def admin_boshqaruv_bulimi(request):
-    user = get_current_person(request)
+    person_id = request.session.get('person_id')
+    if not person_id:
+        return redirect('enter')
+        
+    user = Person.objects.filter(id=person_id).first()
     if user is None or user.role != Person.ROLE_ADMIN:
         return redirect('enter')
 
     edit_user = None
     
-    # POST so'rovlarini qayta ishlash
     if request.method == 'POST':
         action = request.POST.get('action', 'save')
         user_id = request.POST.get('user_id')
         
-        # --- FOYDALANUVCHINI O'CHIRISH ---
         if action == 'delete' and user_id:
             person_to_delete = Person.objects.filter(id=user_id).first()
             if person_to_delete:
@@ -119,17 +109,14 @@ def admin_boshqaruv_bulimi(request):
                 messages.error(request, 'Foydalanuvchi topilmadi.')
             return redirect('admin_bulimi')
             
-        # --- GURUHNI BUTUNLAY O'CHIRISH (YANGI LOGIKA) ---
         elif action == 'delete_group_global':
             group_to_delete = request.POST.get('group_name', '').strip()
             if group_to_delete:
-                # 1. Shu guruhga tegishli barcha foydalanuvchilarning guruh maydonini tozalaymiz
                 students_in_group = Person.objects.filter(group=group_to_delete)
                 for member in students_in_group:
                     member.group = ""
                     member.save()
                 
-                # 2. Ustozlarning ichidan ham bu guruhni o'chirib tashlaymiz
                 teachers = Person.objects.filter(role=Person.ROLE_TEACHER)
                 for t in teachers:
                     if t.group:
@@ -142,7 +129,6 @@ def admin_boshqaruv_bulimi(request):
                 messages.success(request, f"'{group_to_delete}' guruhi tizimdan butunlay o'chirildi (Foydalanuvchilar guruhdan chiqarildi).")
             return redirect('admin_bulimi')
 
-        # --- FOYDALANUVCHI QO'SHISH YOKI TAHRIRLASH ---
         else:
             surname = request.POST.get('surname', '').strip()
             login = request.POST.get('login', '').strip()
@@ -193,17 +179,14 @@ def admin_boshqaruv_bulimi(request):
             else:
                 messages.error(request, 'Toʻliq maʼlumot kiriting.')
 
-    # Tahrirlash uchun GET so'rovi kelganda
     edit_id = request.GET.get('edit_id')
     if edit_id:
         edit_user = Person.objects.filter(id=edit_id).first()
 
-    # Bazadagi mavjud barcha guruhlarni avtomatik aniqlash (Takrorlanmas qilib)
     all_people = Person.objects.all()
     existing_groups = set()
     for p in all_people:
         if p.group:
-            # Agar vergul bilan yozilgan bo'lsa ajratamiz
             parts = [g.strip() for g in p.group.split(',') if g.strip()]
             for part in parts:
                 existing_groups.add(part)
@@ -214,24 +197,26 @@ def admin_boshqaruv_bulimi(request):
         'user': user,
         'people': people,
         'edit_user': edit_user,
-        'existing_groups': sorted(list(existing_groups)), # Guruhlar ro'yxati shablonga o'tadi
+        'existing_groups': sorted(list(existing_groups)),
     })
 
 # -----------------------------------------------------------------------------------
+
 def teacher_boshqaruv_bulimi(request):
-    teacher = get_current_person(request)
+    person_id = request.session.get('person_id')
+    if not person_id:
+        return redirect('enter')
+        
+    teacher = Person.objects.filter(id=person_id).first()
     if teacher is None or teacher.role != Person.ROLE_TEACHER:
         return redirect('enter')
 
     today = timezone.localdate()
 
-    # 1. Ustozning guruhlari ro'yxatini shakllantirish (Vergul bilan ajratilgan bo'lsa ro'yxat qilamiz)
-    # Agar ustozning guruh maydonida bir nechta guruh bo'lsa (masalan: "guruh1, guruh2")
     teacher_groups = [g.strip() for g in teacher.group.split(',') if g.strip()]
     if not teacher_groups and teacher.group:
         teacher_groups = [teacher.group]
 
-    # Yangi guruh qo'shish logikasi
     if request.method == 'POST' and request.POST.get('action') == 'add_group':
         new_group_name = request.POST.get('new_group', '').strip()
         if new_group_name:
@@ -243,10 +228,8 @@ def teacher_boshqaruv_bulimi(request):
             messages.success(request, f"Yangi {new_group_name} muvaffaqiyatli qo'shildi.")
             return redirect('teacher_bulimi')
 
-    # Tanlangan guruhni aniqlash
     selected_group = request.GET.get('group')
     
-    # Agar guruh tanlangan bo'lsa, o'sha guruh ma'lumotlarini yuklaymiz
     students = None
     group_tokens_today = 0
     remaining_tokens = 10
@@ -258,7 +241,6 @@ def teacher_boshqaruv_bulimi(request):
         remaining_tokens = max(0, 10 - group_tokens_today)
         students_awarded_today = PointAward.objects.filter(teacher=teacher, created_at__date=today, student__group=selected_group).values('student').distinct().count()
 
-        # Ball yoki Token berish amallari (Sahifa ichida)
         if request.method == 'POST':
             action = request.POST.get('action')
             student_id = request.POST.get('student_id')
@@ -292,7 +274,6 @@ def teacher_boshqaruv_bulimi(request):
                         messages.success(request, f"{student.surname}ga Star (Token) berildi.")
                     return redirect(f"{request.path}?group={selected_group}")
 
-    # Har bir talaba uchun bugun nima berilganini shablonda oson tekshirish uchun belgi qo'shish
     students_data = []
     if students:
         for s in students:
@@ -317,9 +298,14 @@ def teacher_boshqaruv_bulimi(request):
     }
     return render(request, 'teacher_dashboard.html', context)
 
+# -----------------------------------------------------------------------------------
 
 def uquvchining_bulimi(request):
-    student = get_current_person(request)
+    person_id = request.session.get('person_id')
+    if not person_id:
+        return redirect('enter')
+        
+    student = Person.objects.filter(id=person_id).first()
     if student is None or student.role != Person.ROLE_STUDENT:
         return redirect('enter')
 
@@ -338,7 +324,11 @@ def uquvchining_bulimi(request):
 # -------------------------------------------------------------------------------
 
 def store_page(request):
-    student = get_current_person(request)
+    person_id = request.session.get('person_id')
+    if not person_id:
+        return redirect('enter')
+        
+    student = Person.objects.filter(id=person_id).first()
     if student is None or student.role != Person.ROLE_STUDENT:
         return redirect('enter')
 
@@ -347,8 +337,13 @@ def store_page(request):
 # --------------------------------------------------------------------------------
 
 def chat_page(request):
-    user = get_current_person(request)
+    person_id = request.session.get('person_id')
+    if not person_id:
+        return redirect('enter')
+        
+    user = Person.objects.filter(id=person_id).first()
     if user is None:
         return redirect('enter')
 
     return render(request, 'chat.html', {'user': user})
+
