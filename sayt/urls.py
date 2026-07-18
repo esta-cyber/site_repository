@@ -10,3 +10,4 @@ urlpatterns = [
     path('store/', store_page, name='store'),
     path('chat/', chat_page, name='chat'),
 ]
+
