@@ -296,8 +296,10 @@
                                     <td style="text-align: right;">
                                         <div style="display: inline-flex; gap: 6px;">
                                             <!-- Tahrirlash -->
-                                            <a href="?edit_id={{ person.id }}" style="background: #3b82f6; color: white; text-decoration: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">Tahrirlash</a>
+                                             {% if person.role != 'admin' %}
+                                                <a href="?edit_id={{ person.id }}" style="background: #3b82f6; color: white; text-decoration: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">Tahrirlash</a>
                                             
+                                            {% endif %}
                                             <!-- O'chirish -->
                                             {% if person.id != user.id %}
                                                 <form method="post" style="display: inline;" onsubmit="return confirm('Haqiqatdan ham ushbu foydalanuvchini o‘chirib tashlamoqchimisiz?');">
